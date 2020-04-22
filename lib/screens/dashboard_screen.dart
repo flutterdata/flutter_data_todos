@@ -51,73 +51,76 @@ class TodoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notifier = context
-        .read<Repository<Todo>>()
-        .watchAll(params: {'userId': '1', '_limit': '5'});
     return Scaffold(
       appBar: AppBar(
         title: const Text('TO-DOs'),
         automaticallyImplyLeading: false,
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await notifier.reload();
-        },
-        child: DataStateBuilder<List<Todo>>(
-          notifier: notifier,
-          builder: (context, state, _) {
-            if (state.isLoading) {
-              return Center(child: const CircularProgressIndicator());
-            }
-            final model = state.model
-              ..sort((a, b) {
-                if (a.id == null || b.id == null) return -1;
-                return a.id.compareTo(b.id);
-              });
-            return ListView.separated(
-              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-              itemBuilder: (BuildContext context, int index) {
-                final todo = model[index];
-                return GestureDetector(
-                  onDoubleTap: () =>
-                      todo.copyWith(completed: !todo.completed).save(),
-                  child: Dismissible(
-                    key: ValueKey(todo),
-                    direction: DismissDirection.endToStart,
-                    child: Builder(
-                      builder: (context) {
-                        final check = todo.completed
-                            ? emoji.get(':white_check_mark:').code
-                            : emoji.get(':white_medium_square:').code;
-                        return Text('$check ${todo.title} (id: ${todo.id})');
-                      },
-                    ),
-                    background: Container(
-                      color: Colors.red,
-                      child: Icon(Icons.delete, color: Colors.white),
-                    ),
-                    onDismissed: (_) async {
-                      await todo.delete();
-                    },
-                  ),
+      body: DataStateBuilder<List<Todo>>(
+        notifier: context
+            .read<Repository<Todo>>()
+            .watchAll(params: {'userId': '1', '_limit': '5'}),
+        builder: (context, state, notifier, _) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              await notifier.reload();
+            },
+            child: Builder(
+              builder: (context) {
+                if (state.isLoading) {
+                  return Center(child: const CircularProgressIndicator());
+                }
+                final model = state.model
+                  ..sort((a, b) {
+                    if (a.id == null || b.id == null) return -1;
+                    return a.id.compareTo(b.id);
+                  });
+                return ListView.separated(
+                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                  itemBuilder: (BuildContext context, int index) {
+                    final todo = model[index];
+                    return GestureDetector(
+                      onDoubleTap: () =>
+                          todo.copyWith(completed: !todo.completed).save(),
+                      child: Dismissible(
+                        key: ValueKey(todo),
+                        direction: DismissDirection.endToStart,
+                        child: Builder(
+                          builder: (context) {
+                            final check = todo.completed
+                                ? emoji.get(':white_check_mark:').code
+                                : emoji.get(':white_medium_square:').code;
+                            return Text(
+                                '$check ${todo.title} (id: ${todo.id})');
+                          },
+                        ),
+                        background: Container(
+                          color: Colors.red,
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (_) async {
+                          await todo.delete();
+                        },
+                      ),
+                    );
+                  },
+                  itemCount: model.length,
+                  separatorBuilder: (BuildContext context, int index) =>
+                      const Divider(),
                 );
               },
-              itemCount: model.length,
-              separatorBuilder: (BuildContext context, int index) =>
-                  const Divider(),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Todo(title: "Task number ${Random().nextInt(9999)}").save();
-          Todo(id: 1, title: "OVERWRITING TASK!", completed: true).save();
+          Todo(title: "Task number ${Random().nextInt(9999)}").save();
+          // Todo(id: 1, title: "OVERWRITING TASK!", completed: true).save();
         },
         backgroundColor: Colors.blueAccent,
-        //if you set mini to true then it will make your floating button small
         mini: false,
-        child: new Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
     );
   }

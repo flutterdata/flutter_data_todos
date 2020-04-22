@@ -19,7 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_data: ^0.3.1
+  flutter_data: ^0.3.4
   json_annotation: ^3.0.1
   auto_route: ^0.3.1
   auto_route_generator: ^0.3.2
@@ -28,7 +28,7 @@ dependencies:
   path_provider: ^1.6.5
   google_fonts: ^0.5.0+1
   flutter_emoji: ^2.2.1+1
-  flutter_data_state: ^0.2.6
+  flutter_data_state: ^0.2.9
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
