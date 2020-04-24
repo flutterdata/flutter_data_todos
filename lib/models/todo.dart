@@ -1,23 +1,19 @@
-import 'package:flutter_data/annotations.dart';
 import 'package:flutter_data/flutter_data.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:todo_app/models/user.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'package:todos/models/user.dart';
 
-import 'adapters.dart';
+import '_adapters.dart';
 
 part 'todo.g.dart';
-part 'todo.freezed.dart';
 
-@freezed
+@JsonSerializable()
 @DataRepository([StandardJSONAdapter, JSONPlaceholderAdapter])
-abstract class Todo extends IdDataSupport<int, Todo> implements _$Todo {
-  Todo._();
-  factory Todo({
-    int id,
-    String title,
-    @Default(false) bool completed,
-    BelongsTo<User> user,
-  }) = _Todo;
+class Todo extends DataSupport<Todo> {
+  @override
+  final int id;
+  final String title;
+  final bool completed;
+  final BelongsTo<User> user;
 
-  factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
+  Todo({this.id, this.title, this.completed = false, this.user});
 }

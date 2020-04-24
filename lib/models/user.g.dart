@@ -7,15 +7,15 @@ part of 'user.dart';
 // **************************************************************************
 
 // ignore_for_file: unused_local_variable
+// ignore_for_file: always_declare_return_types
 class _$UserRepository extends Repository<User> {
   _$UserRepository(LocalAdapter<User> adapter) : super(adapter);
 
   @override
   get relationshipMetadata => {
-        'HasMany': {'todos': 'todos', 'posts': 'posts'},
+        'HasMany': {'todos': 'todos'},
         'BelongsTo': {},
-        'repository#todos': manager.locator<Repository<Todo>>(),
-        'repository#posts': manager.locator<Repository<Post>>()
+        'repository#todos': manager.locator<Repository<Todo>>()
       };
 }
 
@@ -33,33 +33,25 @@ class $UserLocalAdapter extends LocalAdapter<User> {
     map['todos'] = {
       '_': [map['todos'], manager]
     };
-    map['posts'] = {
-      '_': [map['posts'], manager]
-    };
-    return User.fromJson(map);
+    return _$UserFromJson(map);
   }
 
   @override
   serialize(model) {
-    final map = model.toJson();
+    final map = _$UserToJson(model);
     map['todos'] = model.todos?.toJson();
-    map['posts'] = model.posts?.toJson();
     return map;
   }
 
   @override
   setOwnerInRelationships(owner, model) {
     model.todos?.owner = owner;
-    model.posts?.owner = owner;
   }
 
   @override
   void setInverseInModel(inverse, model) {
     if (inverse is DataId<Todo>) {
       model.todos?.inverse = inverse;
-    }
-    if (inverse is DataId<Post>) {
-      model.posts?.inverse = inverse;
     }
   }
 }
@@ -68,24 +60,18 @@ class $UserLocalAdapter extends LocalAdapter<User> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_User _$_$_UserFromJson(Map<String, dynamic> json) {
-  return _$_User(
+User _$UserFromJson(Map<String, dynamic> json) {
+  return User(
     id: json['id'] as int,
     name: json['name'] as String,
-    email: json['email'] as String,
     todos: json['todos'] == null
         ? null
         : HasMany.fromJson(json['todos'] as Map<String, dynamic>),
-    posts: json['posts'] == null
-        ? null
-        : HasMany.fromJson(json['posts'] as Map<String, dynamic>),
   );
 }
 
-Map<String, dynamic> _$_$_UserToJson(_$_User instance) => <String, dynamic>{
+Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'email': instance.email,
       'todos': instance.todos,
-      'posts': instance.posts,
     };

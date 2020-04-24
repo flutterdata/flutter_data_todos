@@ -1,5 +1,5 @@
-name: todo_app
-description: TO-DO App with Flutter Data
+name: todos
+description: A new Flutter project.
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -19,15 +19,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_data: ^0.3.4
+  flutter_data:
+    path: ../../Documents/code/flutter/projects/flutter_data/
+  provider: 4.1.0-dev
   json_annotation: ^3.0.1
-  auto_route: ^0.3.1
-  auto_route_generator: ^0.3.2
-  freezed_annotation: ^0.7.1
-  provider: ^4.0.5
-  path_provider: ^1.6.5
-  google_fonts: ^0.5.0+1
-  flutter_emoji: ^2.2.1+1
+  google_fonts: ^1.0.0
+  path_provider: ^1.6.7
   flutter_data_state: ^0.2.9
 
   # The following adds the Cupertino Icons font to your application.
@@ -35,9 +32,8 @@ dependencies:
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
-  json_serializable: ^3.2.5
-  freezed: ^0.10.4
-  build_runner: ^1.8.0
+  build_runner: ^1.8.1
+  json_serializable: ^3.3.0
   flutter_test:
     sdk: flutter
 

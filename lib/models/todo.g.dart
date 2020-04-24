@@ -7,15 +7,12 @@ part of 'todo.dart';
 // **************************************************************************
 
 // ignore_for_file: unused_local_variable
+// ignore_for_file: always_declare_return_types
 class _$TodoRepository extends Repository<Todo> {
   _$TodoRepository(LocalAdapter<Todo> adapter) : super(adapter);
 
   @override
-  get relationshipMetadata => {
-        'HasMany': {},
-        'BelongsTo': {'user': 'users'},
-        'repository#users': manager.locator<Repository<User>>()
-      };
+  get relationshipMetadata => {'HasMany': {}, 'BelongsTo': {}};
 }
 
 class $TodoRepository extends _$TodoRepository
@@ -29,50 +26,37 @@ class $TodoLocalAdapter extends LocalAdapter<Todo> {
 
   @override
   deserialize(map) {
-    map['user'] = {
-      '_': [map['user'], manager]
-    };
-    return Todo.fromJson(map);
+    return _$TodoFromJson(map);
   }
 
   @override
   serialize(model) {
-    final map = model.toJson();
-    map['user'] = model.user?.toJson();
+    final map = _$TodoToJson(model);
+
     return map;
   }
 
   @override
-  setOwnerInRelationships(owner, model) {
-    model.user?.owner = owner;
-  }
+  setOwnerInRelationships(owner, model) {}
 
   @override
-  void setInverseInModel(inverse, model) {
-    if (inverse is DataId<User>) {
-      model.user?.inverse = inverse;
-    }
-  }
+  void setInverseInModel(inverse, model) {}
 }
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_Todo _$_$_TodoFromJson(Map<String, dynamic> json) {
-  return _$_Todo(
+Todo _$TodoFromJson(Map<String, dynamic> json) {
+  return Todo(
     id: json['id'] as int,
     title: json['title'] as String,
-    completed: json['completed'] as bool ?? false,
-    user: json['user'] == null
-        ? null
-        : BelongsTo.fromJson(json['user'] as Map<String, dynamic>),
+    completed: json['completed'] as bool,
   );
 }
 
-Map<String, dynamic> _$_$_TodoToJson(_$_Todo instance) => <String, dynamic>{
+Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
       'id': instance.id,
       'title': instance.title,
       'completed': instance.completed,
-      'user': instance.user,
     };
