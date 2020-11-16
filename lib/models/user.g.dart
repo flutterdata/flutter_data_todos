@@ -3,60 +3,6 @@
 part of 'user.dart';
 
 // **************************************************************************
-// DataGenerator
-// **************************************************************************
-
-// ignore_for_file: unused_local_variable
-// ignore_for_file: always_declare_return_types
-class _$UserRepository extends Repository<User> {
-  _$UserRepository(LocalAdapter<User> adapter) : super(adapter);
-
-  @override
-  get relationshipMetadata => {
-        'HasMany': {'todos': 'todos'},
-        'BelongsTo': {},
-        'repository#todos': manager.locator<Repository<Todo>>()
-      };
-}
-
-class $UserRepository extends _$UserRepository
-    with StandardJSONAdapter<User>, JSONPlaceholderAdapter<User> {
-  $UserRepository(LocalAdapter<User> adapter) : super(adapter);
-}
-
-// ignore: must_be_immutable, unused_local_variable
-class $UserLocalAdapter extends LocalAdapter<User> {
-  $UserLocalAdapter(DataManager manager, {box}) : super(manager, box: box);
-
-  @override
-  deserialize(map) {
-    map['todos'] = {
-      '_': [map['todos'], manager]
-    };
-    return _$UserFromJson(map);
-  }
-
-  @override
-  serialize(model) {
-    final map = _$UserToJson(model);
-    map['todos'] = model.todos?.toJson();
-    return map;
-  }
-
-  @override
-  setOwnerInRelationships(owner, model) {
-    model.todos?.owner = owner;
-  }
-
-  @override
-  void setInverseInModel(inverse, model) {
-    if (inverse is DataId<Todo>) {
-      model.todos?.inverse = inverse;
-    }
-  }
-}
-
-// **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
@@ -75,3 +21,104 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
       'name': instance.name,
       'todos': instance.todos,
     };
+
+// **************************************************************************
+// RepositoryGenerator
+// **************************************************************************
+
+// ignore_for_file: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member, non_constant_identifier_names
+
+mixin $UserLocalAdapter on LocalAdapter<User> {
+  @override
+  Map<String, Map<String, Object>> relationshipsFor([User model]) => {
+        'todos': {
+          'inverse': 'user',
+          'type': 'todos',
+          'kind': 'HasMany',
+          'instance': model?.todos
+        }
+      };
+
+  @override
+  User deserialize(map) {
+    for (final key in relationshipsFor().keys) {
+      map[key] = {
+        '_': [map[key], !map.containsKey(key)],
+      };
+    }
+    return _$UserFromJson(map);
+  }
+
+  @override
+  Map<String, dynamic> serialize(model) => _$UserToJson(model);
+}
+
+// ignore: must_be_immutable
+class $UserHiveLocalAdapter = HiveLocalAdapter<User> with $UserLocalAdapter;
+
+class $UserRemoteAdapter = RemoteAdapter<User>
+    with JSONPlaceholderAdapter<User>;
+
+//
+
+final userLocalAdapterProvider =
+    Provider<LocalAdapter<User>>((ref) => $UserHiveLocalAdapter(ref));
+
+final userRemoteAdapterProvider = Provider<RemoteAdapter<User>>(
+    (ref) => $UserRemoteAdapter(ref.read(userLocalAdapterProvider)));
+
+final userRepositoryProvider =
+    Provider<Repository<User>>((ref) => Repository<User>(ref));
+
+final _watchUser = StateNotifierProvider.autoDispose
+    .family<DataStateNotifier<User>, WatchArgs<User>>((ref, args) {
+  return ref.watch(userRepositoryProvider).watchOne(args.id,
+      remote: args.remote,
+      params: args.params,
+      headers: args.headers,
+      alsoWatch: args.alsoWatch);
+});
+
+AutoDisposeStateNotifierStateProvider<DataState<User>> watchUser(dynamic id,
+    {bool remote = true,
+    Map<String, dynamic> params = const {},
+    Map<String, String> headers = const {},
+    AlsoWatch<User> alsoWatch}) {
+  return _watchUser(WatchArgs(
+          id: id,
+          remote: remote,
+          params: params,
+          headers: headers,
+          alsoWatch: alsoWatch))
+      .state;
+}
+
+final _watchUsers = StateNotifierProvider.autoDispose
+    .family<DataStateNotifier<List<User>>, WatchArgs<User>>((ref, args) {
+  ref.maintainState = false;
+  return ref.watch(userRepositoryProvider).watchAll(
+      remote: args.remote, params: args.params, headers: args.headers);
+});
+
+AutoDisposeStateNotifierProvider<DataStateNotifier<List<User>>> watchUsers(
+    {bool remote, Map<String, dynamic> params, Map<String, String> headers}) {
+  return _watchUsers(
+      WatchArgs(remote: remote, params: params, headers: headers));
+}
+
+extension UserX on User {
+  /// Initializes "fresh" models (i.e. manually instantiated) to use
+  /// [save], [delete] and so on.
+  ///
+  /// Pass:
+  ///  - A `BuildContext` if using Flutter with Riverpod or Provider
+  ///  - Nothing if using Flutter with GetIt
+  ///  - A Riverpod `ProviderContainer` if using pure Dart
+  ///  - Its own [Repository<User>]
+  User init(context) {
+    final repository = context is Repository<User>
+        ? context
+        : internalLocatorFn(userRepositoryProvider, context);
+    return repository.internalAdapter.initializeModel(this, save: true) as User;
+  }
+}

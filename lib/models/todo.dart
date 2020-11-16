@@ -7,8 +7,8 @@ import '_adapters.dart';
 part 'todo.g.dart';
 
 @JsonSerializable()
-@DataRepository([StandardJSONAdapter, JSONPlaceholderAdapter])
-class Todo extends DataSupport<Todo> {
+@DataRepository([JSONPlaceholderAdapter])
+class Todo with DataModel<Todo> {
   @override
   final int id;
   final String title;
