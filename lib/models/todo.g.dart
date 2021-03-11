@@ -9,7 +9,7 @@ part of 'todo.dart';
 Todo _$TodoFromJson(Map<String, dynamic> json) {
   return Todo(
     id: json['id'] as int,
-    title: json['title'] as String,
+    description: json['title'] as String,
     completed: json['completed'] as bool,
     user: json['user'] == null
         ? null
@@ -19,7 +19,7 @@ Todo _$TodoFromJson(Map<String, dynamic> json) {
 
 Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
       'id': instance.id,
-      'title': instance.title,
+      'title': instance.description,
       'completed': instance.completed,
       'user': instance.user,
     };
@@ -34,6 +34,7 @@ mixin $TodoLocalAdapter on LocalAdapter<Todo> {
   @override
   Map<String, Map<String, Object>> relationshipsFor([Todo model]) => {
         'user': {
+          'name': 'user',
           'inverse': 'todos',
           'type': 'users',
           'kind': 'BelongsTo',
@@ -81,18 +82,17 @@ final _watchTodo = StateNotifierProvider.autoDispose
       alsoWatch: args.alsoWatch);
 });
 
-AutoDisposeStateNotifierStateProvider<DataState<Todo>> watchTodo(dynamic id,
+AutoDisposeStateNotifierProvider<DataStateNotifier<Todo>> watchTodo(dynamic id,
     {bool remote = true,
     Map<String, dynamic> params = const {},
     Map<String, String> headers = const {},
     AlsoWatch<Todo> alsoWatch}) {
   return _watchTodo(WatchArgs(
-          id: id,
-          remote: remote,
-          params: params,
-          headers: headers,
-          alsoWatch: alsoWatch))
-      .state;
+      id: id,
+      remote: remote,
+      params: params,
+      headers: headers,
+      alsoWatch: alsoWatch));
 }
 
 final _watchTodos = StateNotifierProvider.autoDispose

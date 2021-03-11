@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_data/flutter_data.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:todos/models/user.dart';
@@ -11,9 +12,11 @@ part 'todo.g.dart';
 class Todo with DataModel<Todo> {
   @override
   final int id;
-  final String title;
+  @JsonKey(name: 'title')
+  final String description;
   final bool completed;
   final BelongsTo<User> user;
 
-  Todo({this.id, this.title, this.completed = false, this.user});
+  Todo(
+      {this.id, @required this.description, this.completed = false, this.user});
 }

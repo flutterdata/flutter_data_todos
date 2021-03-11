@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:todos/models/user.dart';
 import 'package:todos/models/todo.dart';
-import 'package:todos/models/credit_card.dart';
 
 ConfigureRepositoryLocalStorage configureRepositoryLocalStorage = ({FutureFn<String> baseDirFn, List<int> encryptionKey, bool clear}) {
   // ignore: unnecessary_statements
@@ -31,32 +30,29 @@ RepositoryInitializerProvider repositoryInitializerProvider = (
 
 final _repositoryInitializerProviderFamily =
   FutureProvider.family<RepositoryInitializer, RepositoryInitializerArgs>((ref, args) async {
-    final graphs = <String, Map<String, RemoteAdapter>>{'todos,users': {'todos': ref.read(todoRemoteAdapterProvider), 'users': ref.read(userRemoteAdapterProvider)}, 'creditCards,todos,users': {'creditCards': ref.read(creditCardRemoteAdapterProvider), 'todos': ref.read(todoRemoteAdapterProvider), 'users': ref.read(userRemoteAdapterProvider)}};
+    final graphs = <String, Map<String, RemoteAdapter>>{'todos,users': {'todos': ref.read(todoRemoteAdapterProvider), 'users': ref.read(userRemoteAdapterProvider)}};
     
 
-      await ref.read(userRepositoryProvider).initialize(
+      final _userRepository = ref.read(userRepositoryProvider);
+      _userRepository.dispose();
+      await _userRepository.initialize(
         remote: args?.remote,
         verbose: args?.verbose,
         adapters: graphs['todos,users'],
       );
 
-      await ref.read(todoRepositoryProvider).initialize(
+      final _todoRepository = ref.read(todoRepositoryProvider);
+      _todoRepository.dispose();
+      await _todoRepository.initialize(
         remote: args?.remote,
         verbose: args?.verbose,
         adapters: graphs['todos,users'],
-      );
-
-      await ref.read(creditCardRepositoryProvider).initialize(
-        remote: args?.remote,
-        verbose: args?.verbose,
-        adapters: graphs['creditCards,todos,users'],
       );
 
     ref.onDispose(() {
       if (ref.mounted) {
               ref.read(userRepositoryProvider).dispose();
       ref.read(todoRepositoryProvider).dispose();
-      ref.read(creditCardRepositoryProvider).dispose();
 
       }
     });

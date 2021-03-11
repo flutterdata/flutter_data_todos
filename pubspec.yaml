@@ -1,24 +1,25 @@
 name: todos
-description: Flutter Data Sample App!
+description: Flutter Data TO-DOs sample app
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^0.1.2
-  flutter_data: ^0.5.17
-  flutter_hooks: ^0.14.1
-  google_fonts: ^1.0.0
-  hooks_riverpod: ^0.12.1
+  hooks_riverpod: ^0.12.4
+  uuid: ^2.0.4
+  flutter_data: ^0.6.0
   json_annotation: ^3.0.1
   path_provider: ^1.6.7
 
 # dependency_overrides:
 #   flutter_data:
 #     path: ../flutter_data
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -26,7 +27,4 @@ dev_dependencies:
   json_serializable: ^3.3.0
 
 flutter:
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
