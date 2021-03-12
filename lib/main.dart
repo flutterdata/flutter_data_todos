@@ -61,8 +61,6 @@ class Home extends HookWidget {
             return ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
               children: [
-                if (state.hasException)
-                  Text('there was an exception! ${state.exception}'),
                 const Title(),
                 TextField(
                   key: addTodoKey,
@@ -71,18 +69,20 @@ class Home extends HookWidget {
                     labelText: 'What needs to be done?',
                   ),
                   onSubmitted: (value) async {
-                    if (value != '') {
+                    if (value.isNotEmpty) {
                       final repo = context.read(todoRepositoryProvider);
                       Todo(
                         id: Random().nextInt(999) + 2,
                         completed: true,
                         description: value,
-                        // TODO fix
-                        user: filteredTodos.first?.user?.value?.asBelongsTo,
-                      ).init(repo).save();
+                        user: state.model.asBelongsTo,
+                      ).init(repo).save(
+                          remote: true,
+                          onError: (e) {
+                            context.read(userProvider).updateWith(exception: e);
+                          });
+                      newTodoController.clear();
                     }
-
-                    newTodoController.clear();
                   },
                 ),
                 const SizedBox(height: 42),
@@ -103,6 +103,21 @@ class Home extends HookWidget {
                     ),
                   )
                 ],
+                if (state.hasException)
+                  GestureDetector(
+                    onTap: () =>
+                        context.read(userProvider).updateWith(exception: null),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Something went wrong!\n\n${state.exception}\n\nTap to dismiss.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline6
+                            .copyWith(color: Colors.red),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -223,36 +238,46 @@ class TodoItem extends HookWidget {
             textEditingController.text = todo.description;
           } else if (todo.description != textEditingController.text) {
             final todoRepository = context.read(todoRepositoryProvider);
-            todoRepository.save(Todo(
-              id: todo.id,
-              completed: todo.completed,
-              description: textEditingController.text,
-            ));
+            todoRepository.save(
+              Todo(
+                id: todo.id,
+                completed: todo.completed,
+                description: textEditingController.text,
+              ),
+              onError: (e) {
+                context.read(userProvider).updateWith(exception: e);
+              },
+            );
           }
         },
         child: ListTile(
-          onTap: () {
-            itemFocusNode.requestFocus();
-            textFieldFocusNode.requestFocus();
-          },
-          leading: Checkbox(
-            value: todo.completed,
-            onChanged: (value) {
-              final todoRepository = context.read(todoRepositoryProvider);
-              todoRepository.save(Todo(
-                  id: todo.id,
-                  completed: !todo.completed,
-                  description: todo.description));
+            onTap: () {
+              itemFocusNode.requestFocus();
+              textFieldFocusNode.requestFocus();
             },
-          ),
-          title: isFocused
-              ? TextField(
-                  autofocus: true,
-                  focusNode: textFieldFocusNode,
-                  controller: textEditingController,
-                )
-              : Text(todo.description),
-        ),
+            leading: Checkbox(
+              value: todo.completed,
+              onChanged: (value) {
+                final todoRepository = context.read(todoRepositoryProvider);
+                todoRepository.save(
+                  Todo(
+                    id: todo.id,
+                    completed: !todo.completed,
+                    description: todo.description,
+                  ),
+                  onError: (e) {
+                    context.read(userProvider).updateWith(exception: e);
+                  },
+                );
+              },
+            ),
+            title: isFocused
+                ? TextField(
+                    autofocus: true,
+                    focusNode: textFieldFocusNode,
+                    controller: textEditingController,
+                  )
+                : Text(todo.description)),
       ),
     );
   }
@@ -260,6 +285,9 @@ class TodoItem extends HookWidget {
 
 // Providers
 
+// NOTE: this is purely for `alsoWatch` demonstration purposes
+// as we'd otherwise simply use `watchTodos()` or
+// `watchTodos(params: {'userId': 1})` or such
 final userProvider = watchUser(
   1,
   params: {'_embed': 'todos'},

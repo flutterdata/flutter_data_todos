@@ -99,7 +99,11 @@ final _watchTodos = StateNotifierProvider.autoDispose
     .family<DataStateNotifier<List<Todo>>, WatchArgs<Todo>>((ref, args) {
   ref.maintainState = false;
   return ref.watch(todoRepositoryProvider).watchAll(
-      remote: args.remote, params: args.params, headers: args.headers);
+      remote: args.remote,
+      params: args.params,
+      headers: args.headers,
+      filterLocal: args.filterLocal,
+      syncLocal: args.syncLocal);
 });
 
 AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>> watchTodos(
