@@ -70,13 +70,12 @@ class Home extends HookWidget {
                   ),
                   onSubmitted: (value) async {
                     if (value.isNotEmpty) {
-                      final repo = context.read(todoRepositoryProvider);
                       Todo(
                         id: Random().nextInt(999) + 2,
                         completed: true,
                         description: value,
                         user: state.model.asBelongsTo,
-                      ).init(repo).save(
+                      ).init(context.read).save(
                           remote: true,
                           onError: (e) {
                             context.read(userProvider).updateWith(exception: e);

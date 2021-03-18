@@ -6,12 +6,10 @@
 import 'package:flutter_data/flutter_data.dart';
 
 import 'package:path_provider/path_provider.dart';
-
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:todos/models/user.dart';
 import 'package:todos/models/todo.dart';
+import 'package:todos/models/user.dart';
 
 // ignore: prefer_function_declarations_over_variables
 ConfigureRepositoryLocalStorage configureRepositoryLocalStorage = ({FutureFn<String> baseDirFn, List<int> encryptionKey, bool clear}) {
@@ -24,44 +22,36 @@ ConfigureRepositoryLocalStorage configureRepositoryLocalStorage = ({FutureFn<Str
 // ignore: prefer_function_declarations_over_variables
 RepositoryInitializerProvider repositoryInitializerProvider = (
         {bool remote, bool verbose}) {
-      internalLocatorFn = (provider, context) => context.read(provider);
-    
   return _repositoryInitializerProviderFamily(
       RepositoryInitializerArgs(remote, verbose));
 };
 
+final repositoryProviders = {
+  todoRepositoryProvider,
+userRepositoryProvider
+};
+
 final _repositoryInitializerProviderFamily =
   FutureProvider.family<RepositoryInitializer, RepositoryInitializerArgs>((ref, args) async {
-    final graphs = <String, Map<String, RemoteAdapter>>{'todos,users': {'todos': ref.read(todoRemoteAdapterProvider), 'users': ref.read(userRemoteAdapterProvider)}};
-    
+    final adapters = <String, RemoteAdapter>{'todos': ref.read(todoRemoteAdapterProvider), 'users': ref.read(userRemoteAdapterProvider)};
 
-      final _userRepository = ref.read(userRepositoryProvider);
-      _userRepository.dispose();
-      await _userRepository.initialize(
+    for (final repositoryProvider in repositoryProviders) {
+      final repository = ref.read(repositoryProvider);
+      repository.dispose();
+      await repository.initialize(
         remote: args?.remote,
         verbose: args?.verbose,
-        adapters: graphs['todos,users'],
+        adapters: adapters,
       );
-
-      final _todoRepository = ref.read(todoRepositoryProvider);
-      _todoRepository.dispose();
-      await _todoRepository.initialize(
-        remote: args?.remote,
-        verbose: args?.verbose,
-        adapters: graphs['todos,users'],
-      );
+    }
 
     ref.onDispose(() {
       if (ref.mounted) {
-              ref.read(userRepositoryProvider).dispose();
-      ref.read(todoRepositoryProvider).dispose();
-
+        for (final repositoryProvider in repositoryProviders) {
+          ref.read(repositoryProvider).dispose();
+        }
       }
     });
 
     return RepositoryInitializer();
 });
-
-
-
-

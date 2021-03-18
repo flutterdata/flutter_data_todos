@@ -116,15 +116,11 @@ extension TodoX on Todo {
   /// Initializes "fresh" models (i.e. manually instantiated) to use
   /// [save], [delete] and so on.
   ///
-  /// Pass:
-  ///  - A `BuildContext` if using Flutter with Riverpod or Provider
-  ///  - Nothing if using Flutter with GetIt
-  ///  - A Riverpod `ProviderContainer` if using pure Dart
-  ///  - Its own [Repository<Todo>]
-  Todo init(context) {
-    final repository = context is Repository<Todo>
-        ? context
-        : internalLocatorFn(todoRepositoryProvider, context);
-    return repository.internalAdapter.initializeModel(this, save: true) as Todo;
+  /// Requires a `Reader read` (unless using GetIt).
+  ///
+  /// Can be obtained via `context.read`, `ref.read`, `container.read`
+  Todo init(Reader read) {
+    final repository = internalLocatorFn(todoRepositoryProvider, read);
+    return repository.remoteAdapter.initializeModel(this, save: true);
   }
 }
