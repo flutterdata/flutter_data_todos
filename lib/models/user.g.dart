@@ -30,7 +30,7 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
 
 mixin $UserLocalAdapter on LocalAdapter<User> {
   @override
-  Map<String, Map<String, Object>> relationshipsFor([User model]) => {
+  Map<String, Map<String, Object?>> relationshipsFor([User? model]) => {
         'todos': {
           'name': 'todos',
           'inverse': 'user',
@@ -62,29 +62,31 @@ class $UserRemoteAdapter = RemoteAdapter<User>
 
 //
 
-final userLocalAdapterProvider =
+final usersLocalAdapterProvider =
     Provider<LocalAdapter<User>>((ref) => $UserHiveLocalAdapter(ref));
 
-final userRemoteAdapterProvider = Provider<RemoteAdapter<User>>(
-    (ref) => $UserRemoteAdapter(ref.read(userLocalAdapterProvider)));
+final usersRemoteAdapterProvider = Provider<RemoteAdapter<User>>(
+    (ref) => $UserRemoteAdapter(ref.read(usersLocalAdapterProvider)));
 
-final userRepositoryProvider =
+final usersRepositoryProvider =
     Provider<Repository<User>>((ref) => Repository<User>(ref));
 
 final _watchUser = StateNotifierProvider.autoDispose
-    .family<DataStateNotifier<User>, WatchArgs<User>>((ref, args) {
-  return ref.watch(userRepositoryProvider).watchOne(args.id,
+    .family<DataStateNotifier<User?>, DataState<User?>, WatchArgs<User>>(
+        (ref, args) {
+  return ref.read(usersRepositoryProvider).watchOne(args.id,
       remote: args.remote,
       params: args.params,
       headers: args.headers,
       alsoWatch: args.alsoWatch);
 });
 
-AutoDisposeStateNotifierProvider<DataStateNotifier<User>> watchUser(dynamic id,
-    {bool remote = true,
-    Map<String, dynamic> params = const {},
-    Map<String, String> headers = const {},
-    AlsoWatch<User> alsoWatch}) {
+AutoDisposeStateNotifierProvider<DataStateNotifier<User?>, DataState<User?>>
+    watchUser(dynamic id,
+        {bool? remote,
+        Map<String, dynamic>? params,
+        Map<String, String>? headers,
+        AlsoWatch<User>? alsoWatch}) {
   return _watchUser(WatchArgs(
       id: id,
       remote: remote,
@@ -93,10 +95,12 @@ AutoDisposeStateNotifierProvider<DataStateNotifier<User>> watchUser(dynamic id,
       alsoWatch: alsoWatch));
 }
 
-final _watchUsers = StateNotifierProvider.autoDispose
-    .family<DataStateNotifier<List<User>>, WatchArgs<User>>((ref, args) {
+final _watchUsers = StateNotifierProvider.autoDispose.family<
+    DataStateNotifier<List<User>>,
+    DataState<List<User>>,
+    WatchArgs<User>>((ref, args) {
   ref.maintainState = false;
-  return ref.watch(userRepositoryProvider).watchAll(
+  return ref.read(usersRepositoryProvider).watchAll(
       remote: args.remote,
       params: args.params,
       headers: args.headers,
@@ -104,8 +108,12 @@ final _watchUsers = StateNotifierProvider.autoDispose
       syncLocal: args.syncLocal);
 });
 
-AutoDisposeStateNotifierProvider<DataStateNotifier<List<User>>> watchUsers(
-    {bool remote, Map<String, dynamic> params, Map<String, String> headers}) {
+AutoDisposeStateNotifierProvider<DataStateNotifier<List<User>>,
+        DataState<List<User>>>
+    watchUsers(
+        {bool? remote,
+        Map<String, dynamic>? params,
+        Map<String, String>? headers}) {
   return _watchUsers(
       WatchArgs(remote: remote, params: params, headers: headers));
 }
@@ -114,11 +122,9 @@ extension UserX on User {
   /// Initializes "fresh" models (i.e. manually instantiated) to use
   /// [save], [delete] and so on.
   ///
-  /// Requires a `Reader read` (unless using GetIt).
-  ///
   /// Can be obtained via `context.read`, `ref.read`, `container.read`
   User init(Reader read) {
-    final repository = internalLocatorFn(userRepositoryProvider, read);
+    final repository = internalLocatorFn(usersRepositoryProvider, read);
     return repository.remoteAdapter.initializeModel(this, save: true);
   }
 }

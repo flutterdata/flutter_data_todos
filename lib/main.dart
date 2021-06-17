@@ -20,7 +20,7 @@ void main() {
 }
 
 class MyApp extends HookWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +40,11 @@ class MyApp extends HookWidget {
 }
 
 class Home extends HookWidget {
-  const Home({Key key}) : super(key: key);
+  const Home({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final state = useProvider(userProvider.state);
+    final state = useProvider(userProvider);
     final newTodoController = useTextEditingController();
 
     return GestureDetector(
@@ -74,11 +74,13 @@ class Home extends HookWidget {
                         id: Random().nextInt(999) + 2,
                         completed: true,
                         description: value,
-                        user: state.model.asBelongsTo,
+                        user: state.model!.asBelongsTo,
                       ).init(context.read).save(
                           remote: true,
                           onError: (e) {
-                            context.read(userProvider).updateWith(exception: e);
+                            context
+                                .read(userProvider.notifier)
+                                .updateWith(exception: e);
                           });
                       newTodoController.clear();
                     }
@@ -104,15 +106,16 @@ class Home extends HookWidget {
                 ],
                 if (state.hasException)
                   GestureDetector(
-                    onTap: () =>
-                        context.read(userProvider).updateWith(exception: null),
+                    onTap: () => context
+                        .read(userProvider.notifier)
+                        .updateWith(exception: null),
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
                         'Something went wrong!\n\n${state.exception}\n\nTap to dismiss.',
                         style: Theme.of(context)
                             .textTheme
-                            .headline6
+                            .headline6!
                             .copyWith(color: Colors.red),
                       ),
                     ),
@@ -127,13 +130,13 @@ class Home extends HookWidget {
 }
 
 class Toolbar extends HookWidget {
-  const Toolbar({Key key}) : super(key: key);
+  const Toolbar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final filter = useProvider(todoListFilter);
 
-    Color textColorFor(TodoListFilter value) {
+    Color? textColorFor(TodoListFilter value) {
       return filter.state == value ? Colors.blue : null;
     }
 
@@ -187,7 +190,7 @@ class Toolbar extends HookWidget {
 }
 
 class Title extends StatelessWidget {
-  const Title({Key key}) : super(key: key);
+  const Title({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -214,7 +217,7 @@ class Title extends StatelessWidget {
 final _currentTodo = ScopedProvider<Todo>(null);
 
 class TodoItem extends HookWidget {
-  const TodoItem({Key key}) : super(key: key);
+  const TodoItem({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +239,7 @@ class TodoItem extends HookWidget {
           if (focused) {
             textEditingController.text = todo.description;
           } else if (todo.description != textEditingController.text) {
-            final todoRepository = context.read(todoRepositoryProvider);
+            final todoRepository = context.read(todosRepositoryProvider);
             todoRepository.save(
               Todo(
                 id: todo.id,
@@ -244,7 +247,7 @@ class TodoItem extends HookWidget {
                 description: textEditingController.text,
               ),
               onError: (e) {
-                context.read(userProvider).updateWith(exception: e);
+                context.read(userProvider.notifier).updateWith(exception: e);
               },
             );
           }
@@ -257,7 +260,7 @@ class TodoItem extends HookWidget {
             leading: Checkbox(
               value: todo.completed,
               onChanged: (value) {
-                final todoRepository = context.read(todoRepositoryProvider);
+                final todoRepository = context.read(todosRepositoryProvider);
                 todoRepository.save(
                   Todo(
                     id: todo.id,
@@ -265,7 +268,9 @@ class TodoItem extends HookWidget {
                     description: todo.description,
                   ),
                   onError: (e) {
-                    context.read(userProvider).updateWith(exception: e);
+                    context
+                        .read(userProvider.notifier)
+                        .updateWith(exception: e);
                   },
                 );
               },
@@ -290,7 +295,7 @@ class TodoItem extends HookWidget {
 final userProvider = watchUser(
   1,
   params: {'_embed': 'todos'},
-  alsoWatch: (User user) => [user.todos],
+  alsoWatch: (User user) => [user.todos!],
 );
 
 /// The different ways to filter the list of todos
@@ -315,11 +320,11 @@ final todoListFilter = StateProvider((_) => TodoListFilter.all);
 /// This will also optimise unneeded rebuilds if the todo-list changes, but the
 /// number of uncompleted todos doesn't (such as when editing a todo).
 final uncompletedTodosCount = Provider.autoDispose<int>((ref) {
-  final state = ref.watch(userProvider.state);
+  final state = ref.watch(userProvider);
   if (!state.hasModel) {
     return 0;
   }
-  return state.model.todos.where((todo) => !todo.completed).length;
+  return state.model!.todos!.where((todo) => !todo.completed).length;
 });
 
 /// The list of todos after applying of [todoListFilter].
@@ -327,13 +332,13 @@ final uncompletedTodosCount = Provider.autoDispose<int>((ref) {
 /// This too uses [Provider], to avoid recomputing the filtered list unless either
 /// the filter of or the todo-list updates.
 final filteredTodosProvider = Provider.autoDispose<List<Todo>>((ref) {
-  final state = ref.watch(userProvider.state);
+  final state = ref.watch(userProvider);
   // if (!state.hasModel) {
   //   return [];
   // }
 
   final filter = ref.watch(todoListFilter);
-  final todos = state.model.todos.toList();
+  final todos = state.model!.todos!.toList();
 
   switch (filter.state) {
     case TodoListFilter.completed:

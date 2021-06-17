@@ -32,7 +32,7 @@ Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
 
 mixin $TodoLocalAdapter on LocalAdapter<Todo> {
   @override
-  Map<String, Map<String, Object>> relationshipsFor([Todo model]) => {
+  Map<String, Map<String, Object?>> relationshipsFor([Todo? model]) => {
         'user': {
           'name': 'user',
           'inverse': 'todos',
@@ -64,29 +64,31 @@ class $TodoRemoteAdapter = RemoteAdapter<Todo>
 
 //
 
-final todoLocalAdapterProvider =
+final todosLocalAdapterProvider =
     Provider<LocalAdapter<Todo>>((ref) => $TodoHiveLocalAdapter(ref));
 
-final todoRemoteAdapterProvider = Provider<RemoteAdapter<Todo>>(
-    (ref) => $TodoRemoteAdapter(ref.read(todoLocalAdapterProvider)));
+final todosRemoteAdapterProvider = Provider<RemoteAdapter<Todo>>(
+    (ref) => $TodoRemoteAdapter(ref.read(todosLocalAdapterProvider)));
 
-final todoRepositoryProvider =
+final todosRepositoryProvider =
     Provider<Repository<Todo>>((ref) => Repository<Todo>(ref));
 
 final _watchTodo = StateNotifierProvider.autoDispose
-    .family<DataStateNotifier<Todo>, WatchArgs<Todo>>((ref, args) {
-  return ref.watch(todoRepositoryProvider).watchOne(args.id,
+    .family<DataStateNotifier<Todo?>, DataState<Todo?>, WatchArgs<Todo>>(
+        (ref, args) {
+  return ref.read(todosRepositoryProvider).watchOne(args.id,
       remote: args.remote,
       params: args.params,
       headers: args.headers,
       alsoWatch: args.alsoWatch);
 });
 
-AutoDisposeStateNotifierProvider<DataStateNotifier<Todo>> watchTodo(dynamic id,
-    {bool remote = true,
-    Map<String, dynamic> params = const {},
-    Map<String, String> headers = const {},
-    AlsoWatch<Todo> alsoWatch}) {
+AutoDisposeStateNotifierProvider<DataStateNotifier<Todo?>, DataState<Todo?>>
+    watchTodo(dynamic id,
+        {bool? remote,
+        Map<String, dynamic>? params,
+        Map<String, String>? headers,
+        AlsoWatch<Todo>? alsoWatch}) {
   return _watchTodo(WatchArgs(
       id: id,
       remote: remote,
@@ -95,10 +97,12 @@ AutoDisposeStateNotifierProvider<DataStateNotifier<Todo>> watchTodo(dynamic id,
       alsoWatch: alsoWatch));
 }
 
-final _watchTodos = StateNotifierProvider.autoDispose
-    .family<DataStateNotifier<List<Todo>>, WatchArgs<Todo>>((ref, args) {
+final _watchTodos = StateNotifierProvider.autoDispose.family<
+    DataStateNotifier<List<Todo>>,
+    DataState<List<Todo>>,
+    WatchArgs<Todo>>((ref, args) {
   ref.maintainState = false;
-  return ref.watch(todoRepositoryProvider).watchAll(
+  return ref.read(todosRepositoryProvider).watchAll(
       remote: args.remote,
       params: args.params,
       headers: args.headers,
@@ -106,8 +110,12 @@ final _watchTodos = StateNotifierProvider.autoDispose
       syncLocal: args.syncLocal);
 });
 
-AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>> watchTodos(
-    {bool remote, Map<String, dynamic> params, Map<String, String> headers}) {
+AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>,
+        DataState<List<Todo>>>
+    watchTodos(
+        {bool? remote,
+        Map<String, dynamic>? params,
+        Map<String, String>? headers}) {
   return _watchTodos(
       WatchArgs(remote: remote, params: params, headers: headers));
 }
@@ -116,11 +124,9 @@ extension TodoX on Todo {
   /// Initializes "fresh" models (i.e. manually instantiated) to use
   /// [save], [delete] and so on.
   ///
-  /// Requires a `Reader read` (unless using GetIt).
-  ///
   /// Can be obtained via `context.read`, `ref.read`, `container.read`
   Todo init(Reader read) {
-    final repository = internalLocatorFn(todoRepositoryProvider, read);
+    final repository = internalLocatorFn(todosRepositoryProvider, read);
     return repository.remoteAdapter.initializeModel(this, save: true);
   }
 }

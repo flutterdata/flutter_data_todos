@@ -12,7 +12,7 @@ class User with DataModel<User> {
   @override
   final int id;
   final String name;
-  final HasMany<Todo> todos;
+  final HasMany<Todo>? todos;
 
-  User({this.id, this.name, this.todos});
+  User({required this.id, required this.name, this.todos});
 }
