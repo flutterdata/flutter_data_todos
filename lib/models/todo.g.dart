@@ -115,9 +115,15 @@ AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>,
     watchTodos(
         {bool? remote,
         Map<String, dynamic>? params,
-        Map<String, String>? headers}) {
-  return _watchTodos(
-      WatchArgs(remote: remote, params: params, headers: headers));
+        Map<String, String>? headers,
+        bool Function(Todo)? filterLocal,
+        bool? syncLocal}) {
+  return _watchTodos(WatchArgs(
+      remote: remote,
+      params: params,
+      headers: headers,
+      filterLocal: filterLocal,
+      syncLocal: syncLocal));
 }
 
 extension TodoX on Todo {
@@ -125,8 +131,10 @@ extension TodoX on Todo {
   /// [save], [delete] and so on.
   ///
   /// Can be obtained via `context.read`, `ref.read`, `container.read`
-  Todo init(Reader read) {
+  Todo init(Reader read, {bool save = true}) {
     final repository = internalLocatorFn(todosRepositoryProvider, read);
-    return repository.remoteAdapter.initializeModel(this, save: true);
+    final updatedModel =
+        repository.remoteAdapter.initializeModel(this, save: save);
+    return save ? updatedModel : this;
   }
 }
