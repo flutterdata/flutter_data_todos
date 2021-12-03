@@ -6,6 +6,7 @@
 import 'package:flutter_data/flutter_data.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:todos/models/todo.dart';
 import 'package:todos/models/user.dart';
@@ -36,29 +37,35 @@ final repositoryProviders = <String, Provider<Repository<DataModel>>>{
 
 final _repositoryInitializerProviderFamily =
   FutureProvider.family<RepositoryInitializer, RepositoryInitializerArgs>((ref, args) async {
-    final adapters = <String, RemoteAdapter>{'todos': ref.read(todosRemoteAdapterProvider), 'users': ref.read(usersRemoteAdapterProvider)};
+    final adapters = <String, RemoteAdapter>{'todos': ref.watch(todosRemoteAdapterProvider), 'users': ref.watch(usersRemoteAdapterProvider)};
     final remotes = <String, bool>{'todos': true, 'users': true};
 
-    await ref.read(graphNotifierProvider).initialize();
+    await ref.watch(graphNotifierProvider).initialize();
 
     for (final key in repositoryProviders.keys) {
-      final repository = ref.read(repositoryProviders[key]!);
+      final repository = ref.watch(repositoryProviders[key]!);
       repository.dispose();
       await repository.initialize(
-        remote: args.remote ?? remotes[key]!,
+        remote: args.remote ?? remotes[key],
         verbose: args.verbose,
         adapters: adapters,
       );
     }
 
     ref.onDispose(() {
-      if (ref.mounted) {
-        for (final repositoryProvider in repositoryProviders.values) {
-          ref.read(repositoryProvider).dispose();
-        }
-        ref.read(graphNotifierProvider).dispose();
+      for (final repositoryProvider in repositoryProviders.values) {
+        ref.watch(repositoryProvider).dispose();
       }
     });
 
     return RepositoryInitializer();
 });
+extension RepositoryWidgetRefX on WidgetRef {
+  Repository<Todo> get todos => watch(todosRepositoryProvider)..internalWatch = watch;
+  Repository<User> get users => watch(usersRepositoryProvider)..internalWatch = watch;
+}
+
+extension RepositoryRefX on Ref {
+  Repository<Todo> get todos => watch(todosRepositoryProvider)..internalWatch = watch as Watcher;
+  Repository<User> get users => watch(usersRepositoryProvider)..internalWatch = watch as Watcher;
+}

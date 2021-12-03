@@ -6,16 +6,14 @@ part of 'todo.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Todo _$TodoFromJson(Map<String, dynamic> json) {
-  return Todo(
-    id: json['id'] as int,
-    description: json['title'] as String,
-    completed: json['completed'] as bool,
-    user: json['user'] == null
-        ? null
-        : BelongsTo.fromJson(json['user'] as Map<String, dynamic>),
-  );
-}
+Todo _$TodoFromJson(Map<String, dynamic> json) => Todo(
+      id: json['id'] as int,
+      description: json['title'] as String,
+      completed: json['completed'] as bool? ?? false,
+      user: json['user'] == null
+          ? null
+          : BelongsTo<User>.fromJson(json['user'] as Map<String, dynamic>),
+    );
 
 Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
       'id': instance.id,
@@ -65,18 +63,18 @@ class $TodoRemoteAdapter = RemoteAdapter<Todo>
 //
 
 final todosLocalAdapterProvider =
-    Provider<LocalAdapter<Todo>>((ref) => $TodoHiveLocalAdapter(ref));
+    Provider<LocalAdapter<Todo>>((ref) => $TodoHiveLocalAdapter(ref.read));
 
 final todosRemoteAdapterProvider = Provider<RemoteAdapter<Todo>>(
-    (ref) => $TodoRemoteAdapter(ref.read(todosLocalAdapterProvider)));
+    (ref) => $TodoRemoteAdapter(ref.watch(todosLocalAdapterProvider)));
 
-final todosRepositoryProvider =
-    Provider<Repository<Todo>>((ref) => Repository<Todo>(ref));
+final todosRepositoryProvider = Provider<Repository<Todo>>(
+    (ref) => Repository<Todo>(ref.read, todoProvider, todosProvider));
 
-final _watchTodo = StateNotifierProvider.autoDispose
+final _todoProvider = StateNotifierProvider.autoDispose
     .family<DataStateNotifier<Todo?>, DataState<Todo?>, WatchArgs<Todo>>(
         (ref, args) {
-  return ref.read(todosRepositoryProvider).watchOne(args.id,
+  return ref.watch(todosRepositoryProvider).watchOneNotifier(args.id,
       remote: args.remote,
       params: args.params,
       headers: args.headers,
@@ -84,12 +82,12 @@ final _watchTodo = StateNotifierProvider.autoDispose
 });
 
 AutoDisposeStateNotifierProvider<DataStateNotifier<Todo?>, DataState<Todo?>>
-    watchTodo(dynamic id,
+    todoProvider(dynamic id,
         {bool? remote,
         Map<String, dynamic>? params,
         Map<String, String>? headers,
         AlsoWatch<Todo>? alsoWatch}) {
-  return _watchTodo(WatchArgs(
+  return _todoProvider(WatchArgs(
       id: id,
       remote: remote,
       params: params,
@@ -97,40 +95,33 @@ AutoDisposeStateNotifierProvider<DataStateNotifier<Todo?>, DataState<Todo?>>
       alsoWatch: alsoWatch));
 }
 
-final _watchTodos = StateNotifierProvider.autoDispose.family<
+final _todosProvider = StateNotifierProvider.autoDispose.family<
     DataStateNotifier<List<Todo>>,
     DataState<List<Todo>>,
     WatchArgs<Todo>>((ref, args) {
-  ref.maintainState = false;
-  return ref.read(todosRepositoryProvider).watchAll(
+  return ref.watch(todosRepositoryProvider).watchAllNotifier(
       remote: args.remote,
       params: args.params,
       headers: args.headers,
-      filterLocal: args.filterLocal,
       syncLocal: args.syncLocal);
 });
 
 AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>,
         DataState<List<Todo>>>
-    watchTodos(
+    todosProvider(
         {bool? remote,
         Map<String, dynamic>? params,
         Map<String, String>? headers,
-        bool Function(Todo)? filterLocal,
         bool? syncLocal}) {
-  return _watchTodos(WatchArgs(
-      remote: remote,
-      params: params,
-      headers: headers,
-      filterLocal: filterLocal,
-      syncLocal: syncLocal));
+  return _todosProvider(WatchArgs(
+      remote: remote, params: params, headers: headers, syncLocal: syncLocal));
 }
 
 extension TodoX on Todo {
   /// Initializes "fresh" models (i.e. manually instantiated) to use
   /// [save], [delete] and so on.
   ///
-  /// Can be obtained via `context.read`, `ref.read`, `container.read`
+  /// Can be obtained via `ref.read`, `container.read`
   Todo init(Reader read, {bool save = true}) {
     final repository = internalLocatorFn(todosRepositoryProvider, read);
     final updatedModel =
