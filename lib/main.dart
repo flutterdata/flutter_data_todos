@@ -1,36 +1,41 @@
+// ignore_for_file: body_might_complete_normally_nullable
+
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_data_todos/models/todo.dart';
+import 'package:flutter_data_todos/models/user.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:todos/models/todo.dart';
 import 'package:flutter_data/flutter_data.dart';
-import 'package:todos/models/user.dart';
 
 import 'main.data.dart';
 
 void main() {
-  runApp(ProviderScope(
-    child: MyApp(),
-    overrides: [
-      configureRepositoryLocalStorage(clear: true),
-    ],
-  ));
+  runApp(
+    ProviderScope(
+      child: const MyApp(),
+      overrides: [
+        configureRepositoryLocalStorage(clear: true),
+      ],
+    ),
+  );
 }
 
 class MyApp extends HookConsumerWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       home: RefreshIndicator(
         onRefresh: () async {
-          ref.refresh(repositoryInitializerProvider());
+          ref.refresh(repositoryInitializerProvider);
         },
-        child: ref.watch(repositoryInitializerProvider()).when(
-              loading: () => Center(child: const CircularProgressIndicator()),
+        child: ref.watch(repositoryInitializerProvider).when(
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text(err.toString())),
-              data: (_) => Home(),
+              data: (_) => const Home(),
             ),
       ),
     );
@@ -38,6 +43,8 @@ class MyApp extends HookConsumerWidget {
 }
 
 class Home extends HookConsumerWidget {
+  const Home({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(userProvider);
@@ -51,9 +58,10 @@ class Home extends HookConsumerWidget {
         body: Builder(
           builder: (context) {
             if (state.isLoading) {
-              return Center(child: const CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
             final filteredTodos = ref.watch(filteredTodosProvider);
+            final user = state.model!;
 
             return ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -62,8 +70,8 @@ class Home extends HookConsumerWidget {
                 TextField(
                   key: addTodoKey,
                   controller: newTodoController,
-                  decoration: const InputDecoration(
-                    labelText: 'What needs to be done?',
+                  decoration: InputDecoration(
+                    labelText: 'What needs to be done, ${user.name}?',
                   ),
                   onSubmitted: (value) async {
                     if (value.isNotEmpty) {
@@ -72,9 +80,9 @@ class Home extends HookConsumerWidget {
                         completed: true,
                         description: value,
                         user: state.model!.asBelongsTo,
-                      ).init(ref.read).save(
+                      ).save(
                           remote: true,
-                          onError: (e) {
+                          onError: (e, _, __) {
                             ref
                                 .read(userProvider.notifier)
                                 .updateWith(exception: e);
@@ -83,8 +91,27 @@ class Home extends HookConsumerWidget {
                     }
                   },
                 ),
+                if (state.hasException)
+                  GestureDetector(
+                    onTap: () => ref
+                        .read(userProvider.notifier)
+                        .updateWith(exception: null),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        '''Something went wrong: ${state.exception}
+(MyJSONServer does not support saving!)
+
+Tap to dismiss.''',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyLarge!
+                            .copyWith(color: Colors.red),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 42),
-                Toolbar(),
+                const Toolbar(),
                 if (filteredTodos.isNotEmpty) const Divider(height: 0),
                 for (final todo in filteredTodos) ...[
                   const Divider(height: 0),
@@ -101,22 +128,6 @@ class Home extends HookConsumerWidget {
                     ),
                   )
                 ],
-                if (state.hasException)
-                  GestureDetector(
-                    onTap: () => ref
-                        .read(userProvider.notifier)
-                        .updateWith(exception: null),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Something went wrong!\n\n${state.exception}\n\nTap to dismiss.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headline6!
-                            .copyWith(color: Colors.red),
-                      ),
-                    ),
-                  ),
               ],
             );
           },
@@ -127,6 +138,8 @@ class Home extends HookConsumerWidget {
 }
 
 class Toolbar extends HookConsumerWidget {
+  const Toolbar({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.read(todoListFilter);
@@ -245,14 +258,8 @@ class TodoItem extends HookConsumerWidget {
           if (focused) {
             textEditingController.text = todo.description;
           } else if (todo.description != textEditingController.text) {
-            final todoRepository = ref.read(todosRepositoryProvider);
-            todoRepository.save(
-              Todo(
-                id: todo.id,
-                completed: todo.completed,
-                description: textEditingController.text,
-              ),
-              onError: (e) {
+            todo.copyWith(description: textEditingController.text).save(
+              onError: (e, _, __) {
                 ref.read(userProvider.notifier).updateWith(exception: e);
               },
             );
@@ -266,17 +273,14 @@ class TodoItem extends HookConsumerWidget {
             leading: Checkbox(
               value: todo.completed,
               onChanged: (value) {
-                final todoRepository = ref.read(todosRepositoryProvider);
-                todoRepository.save(
-                  Todo(
-                    id: todo.id,
-                    completed: !todo.completed,
-                    description: todo.description,
-                  ),
-                  onError: (e) {
-                    ref.read(userProvider.notifier).updateWith(exception: e);
-                  },
-                );
+                todo.copyWith(completed: !todo.completed).save(
+                      remote: false,
+                      onError: (e, _, __) {
+                        ref
+                            .read(userProvider.notifier)
+                            .updateWith(exception: e);
+                      },
+                    );
               },
             ),
             title: isFocused
@@ -294,12 +298,12 @@ class TodoItem extends HookConsumerWidget {
 // Providers
 
 // NOTE: this is purely for `alsoWatch` demonstration purposes
-// as we'd otherwise simply use `watchTodos()` or
-// `watchTodos(params: {'userId': 1})` or such
+// as we'd otherwise simply use `ref.todos.watchAll()`
 final userProvider = StateNotifierProvider.autoDispose<DataStateNotifier<User?>,
     DataState<User?>>((ref) {
+  ref.users.logLevel = 1;
   return ref.users.watchOneNotifier(1,
-      params: {'_embed': 'todos'}, alsoWatch: (User user) => [user.todos!]);
+      params: {'_embed': 'todos'}, alsoWatch: (u) => {u.todos});
 });
 
 /// The different ways to filter the list of todos
@@ -328,7 +332,7 @@ final uncompletedTodosCount = Provider.autoDispose<int>((ref) {
   if (!state.hasModel) {
     return 0;
   }
-  return state.model!.todos!.where((todo) => !todo.completed).length;
+  return state.model!.todos.where((todo) => !todo.completed).length;
 });
 
 /// The list of todos after applying of [todoListFilter].
@@ -337,9 +341,8 @@ final uncompletedTodosCount = Provider.autoDispose<int>((ref) {
 /// the filter of or the todo-list updates.
 final filteredTodosProvider = Provider.autoDispose<List<Todo>>((ref) {
   final filter = ref.watch(todoListFilter);
-
   final state = ref.watch(userProvider);
-  final todos = state.model!.todos!.toList();
+  final todos = state.model!.todos.toList();
 
   switch (filter) {
     case TodoListFilter.completed:

@@ -1,18 +1,16 @@
-# Flutter Data TO-DO app
+# flutter_data_todos
 
-A sample that shows how to configure and use [Flutter Data](https://pub.dev/packages/flutter_data) in a Flutter app.
+A new Flutter project.
 
-Uses [Riverpod hooks](https://pub.dev/packages/hooks_riverpod) for DI.
+## Getting Started
 
-Continuously improved and updated.
+This project is a starting point for a Flutter application.
 
-Tested on:
+A few resources to get you started if this is your first Flutter project:
 
- - iOS
- - Android
- - Web
- - MacOS
+- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
 
-## 📝 License
-
-See [LICENSE](LICENSE).
+For help getting started with Flutter, view our
+[online documentation](https://flutter.dev/docs), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

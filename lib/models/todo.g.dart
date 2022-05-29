@@ -3,56 +3,126 @@
 part of 'todo.dart';
 
 // **************************************************************************
-// JsonSerializableGenerator
+// CopyWithGenerator
 // **************************************************************************
 
-Todo _$TodoFromJson(Map<String, dynamic> json) => Todo(
-      id: json['id'] as int,
-      description: json['title'] as String,
-      completed: json['completed'] as bool? ?? false,
-      user: json['user'] == null
-          ? null
-          : BelongsTo<User>.fromJson(json['user'] as Map<String, dynamic>),
-    );
+abstract class _$TodoCWProxy {
+  Todo completed(bool completed);
 
-Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
-      'id': instance.id,
-      'title': instance.description,
-      'completed': instance.completed,
-      'user': instance.user,
-    };
+  Todo description(String description);
+
+  Todo id(int id);
+
+  Todo user(BelongsTo<User>? user);
+
+  /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Todo(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
+  ///
+  /// Usage
+  /// ```dart
+  /// Todo(...).copyWith(id: 12, name: "My name")
+  /// ````
+  Todo call({
+    bool? completed,
+    String? description,
+    int? id,
+    BelongsTo<User>? user,
+  });
+}
+
+/// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfTodo.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfTodo.copyWith.fieldName(...)`
+class _$TodoCWProxyImpl implements _$TodoCWProxy {
+  final Todo _value;
+
+  const _$TodoCWProxyImpl(this._value);
+
+  @override
+  Todo completed(bool completed) => this(completed: completed);
+
+  @override
+  Todo description(String description) => this(description: description);
+
+  @override
+  Todo id(int id) => this(id: id);
+
+  @override
+  Todo user(BelongsTo<User>? user) => this(user: user);
+
+  @override
+
+  /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `Todo(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
+  ///
+  /// Usage
+  /// ```dart
+  /// Todo(...).copyWith(id: 12, name: "My name")
+  /// ````
+  Todo call({
+    Object? completed = const $CopyWithPlaceholder(),
+    Object? description = const $CopyWithPlaceholder(),
+    Object? id = const $CopyWithPlaceholder(),
+    Object? user = const $CopyWithPlaceholder(),
+  }) {
+    return Todo(
+      completed: completed == const $CopyWithPlaceholder() || completed == null
+          ? _value.completed
+          // ignore: cast_nullable_to_non_nullable
+          : completed as bool,
+      description:
+          description == const $CopyWithPlaceholder() || description == null
+              ? _value.description
+              // ignore: cast_nullable_to_non_nullable
+              : description as String,
+      id: id == const $CopyWithPlaceholder() || id == null
+          ? _value.id
+          // ignore: cast_nullable_to_non_nullable
+          : id as int,
+      user: user == const $CopyWithPlaceholder()
+          ? _value.user
+          // ignore: cast_nullable_to_non_nullable
+          : user as BelongsTo<User>?,
+    );
+  }
+}
+
+extension $TodoCopyWith on Todo {
+  /// Returns a callable class that can be used as follows: `instanceOfTodo.copyWith(...)` or like so:`instanceOfTodo.copyWith.fieldName(...)`.
+  _$TodoCWProxy get copyWith => _$TodoCWProxyImpl(this);
+}
 
 // **************************************************************************
 // RepositoryGenerator
 // **************************************************************************
 
-// ignore_for_file: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member, non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, duplicate_ignore
 
 mixin $TodoLocalAdapter on LocalAdapter<Todo> {
+  static final Map<String, RelationshipMeta> _kTodoRelationshipMetas = {
+    'userId': RelationshipMeta<User>(
+      name: 'user',
+      inverseName: 'todos',
+      type: 'users',
+      kind: 'BelongsTo',
+      instance: (_) => (_ as Todo).user,
+    )
+  };
+
   @override
-  Map<String, Map<String, Object?>> relationshipsFor([Todo? model]) => {
-        'user': {
-          'name': 'user',
-          'inverse': 'todos',
-          'type': 'users',
-          'kind': 'BelongsTo',
-          'instance': model?.user
-        }
-      };
+  Map<String, RelationshipMeta> get relationshipMetas =>
+      _kTodoRelationshipMetas;
 
   @override
   Todo deserialize(map) {
-    for (final key in relationshipsFor().keys) {
-      map[key] = {
-        '_': [map[key], !map.containsKey(key)],
-      };
-    }
+    map = transformDeserialize(map);
     return _$TodoFromJson(map);
   }
 
   @override
-  Map<String, dynamic> serialize(model) => _$TodoToJson(model);
+  Map<String, dynamic> serialize(model, {bool withRelationships = true}) {
+    final map = _$TodoToJson(model);
+    return transformSerialize(map, withRelationships: withRelationships);
+  }
 }
+
+final _todosFinders = <String, dynamic>{};
 
 // ignore: must_be_immutable
 class $TodoHiveLocalAdapter = HiveLocalAdapter<Todo> with $TodoLocalAdapter;
@@ -60,72 +130,43 @@ class $TodoHiveLocalAdapter = HiveLocalAdapter<Todo> with $TodoLocalAdapter;
 class $TodoRemoteAdapter = RemoteAdapter<Todo>
     with JSONPlaceholderAdapter<Todo>;
 
-//
+final internalTodosRemoteAdapterProvider = Provider<RemoteAdapter<Todo>>(
+    (ref) => $TodoRemoteAdapter(
+        $TodoHiveLocalAdapter(ref.read), InternalHolder(_todosFinders)));
 
-final todosLocalAdapterProvider =
-    Provider<LocalAdapter<Todo>>((ref) => $TodoHiveLocalAdapter(ref.read));
+final todosRepositoryProvider =
+    Provider<Repository<Todo>>((ref) => Repository<Todo>(ref.read));
 
-final todosRemoteAdapterProvider = Provider<RemoteAdapter<Todo>>(
-    (ref) => $TodoRemoteAdapter(ref.watch(todosLocalAdapterProvider)));
-
-final todosRepositoryProvider = Provider<Repository<Todo>>(
-    (ref) => Repository<Todo>(ref.read, todoProvider, todosProvider));
-
-final _todoProvider = StateNotifierProvider.autoDispose
-    .family<DataStateNotifier<Todo?>, DataState<Todo?>, WatchArgs<Todo>>(
-        (ref, args) {
-  return ref.watch(todosRepositoryProvider).watchOneNotifier(args.id,
-      remote: args.remote,
-      params: args.params,
-      headers: args.headers,
-      alsoWatch: args.alsoWatch);
-});
-
-AutoDisposeStateNotifierProvider<DataStateNotifier<Todo?>, DataState<Todo?>>
-    todoProvider(dynamic id,
-        {bool? remote,
-        Map<String, dynamic>? params,
-        Map<String, String>? headers,
-        AlsoWatch<Todo>? alsoWatch}) {
-  return _todoProvider(WatchArgs(
-      id: id,
-      remote: remote,
-      params: params,
-      headers: headers,
-      alsoWatch: alsoWatch));
+extension TodoDataRepositoryX on Repository<Todo> {
+  JSONPlaceholderAdapter<Todo> get jSONPlaceholderAdapter =>
+      remoteAdapter as JSONPlaceholderAdapter<Todo>;
 }
 
-final _todosProvider = StateNotifierProvider.autoDispose.family<
-    DataStateNotifier<List<Todo>>,
-    DataState<List<Todo>>,
-    WatchArgs<Todo>>((ref, args) {
-  return ref.watch(todosRepositoryProvider).watchAllNotifier(
-      remote: args.remote,
-      params: args.params,
-      headers: args.headers,
-      syncLocal: args.syncLocal);
-});
-
-AutoDisposeStateNotifierProvider<DataStateNotifier<List<Todo>>,
-        DataState<List<Todo>>>
-    todosProvider(
-        {bool? remote,
-        Map<String, dynamic>? params,
-        Map<String, String>? headers,
-        bool? syncLocal}) {
-  return _todosProvider(WatchArgs(
-      remote: remote, params: params, headers: headers, syncLocal: syncLocal));
-}
-
-extension TodoX on Todo {
-  /// Initializes "fresh" models (i.e. manually instantiated) to use
-  /// [save], [delete] and so on.
-  ///
-  /// Can be obtained via `ref.read`, `container.read`
-  Todo init(Reader read, {bool save = true}) {
-    final repository = internalLocatorFn(todosRepositoryProvider, read);
-    final updatedModel =
-        repository.remoteAdapter.initializeModel(this, save: save);
-    return save ? updatedModel : this;
+extension TodoRelationshipGraphNodeX on RelationshipGraphNode<Todo> {
+  RelationshipGraphNode<User> get user {
+    final meta = $TodoLocalAdapter._kTodoRelationshipMetas['userId']
+        as RelationshipMeta<User>;
+    return meta.clone(
+        parent: this is RelationshipMeta ? this as RelationshipMeta : null);
   }
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Todo _$TodoFromJson(Map<String, dynamic> json) => Todo(
+      id: json['id'] as int,
+      description: json['title'] as String,
+      completed: json['completed'] as bool? ?? false,
+      user: json['userId'] == null
+          ? null
+          : BelongsTo<User>.fromJson(json['userId'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
+      'id': instance.id,
+      'title': instance.description,
+      'completed': instance.completed,
+      'userId': instance.user,
+    };

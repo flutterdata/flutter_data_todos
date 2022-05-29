@@ -1,25 +1,32 @@
+import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:flutter_data/flutter_data.dart';
+import 'package:flutter_data_todos/models/user.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:todos/models/user.dart';
 
 import '_adapters.dart';
 
 part 'todo.g.dart';
 
 @JsonSerializable()
+@CopyWith()
 @DataRepository([JSONPlaceholderAdapter])
-class Todo with DataModel<Todo> {
+class Todo extends DataModel<Todo> {
   @override
   final int id;
   @JsonKey(name: 'title')
   final String description;
   final bool completed;
-  final BelongsTo<User>? user;
+  @JsonKey(name: 'userId')
+  late final BelongsTo<User> user;
 
   Todo({
     required this.id,
     required this.description,
     this.completed = false,
-    this.user,
-  });
+    BelongsTo<User>? user,
+  }) : user = user ?? BelongsTo();
+
+  @override
+  String toString() =>
+      'Todo(id: $id, text: $description, completed: $completed)';
 }
