@@ -16,7 +16,7 @@ void main() {
     ProviderScope(
       child: const MyApp(),
       overrides: [
-        configureRepositoryLocalStorage(clear: true),
+        configureRepositoryLocalStorage(clear: false),
       ],
     ),
   );
@@ -82,7 +82,10 @@ class Home extends HookConsumerWidget {
                         user: state.model!.asBelongsTo,
                       ).save(
                           remote: true,
-                          onError: (e, _, __) {
+                          onError: (e, label, adapter) async {
+                            await adapter.onError(e, label); // optional
+                            adapter.log(
+                                label!, 'custom logging: ${label.model}');
                             ref
                                 .read(userProvider.notifier)
                                 .updateWith(exception: e);
@@ -301,7 +304,8 @@ class TodoItem extends HookConsumerWidget {
 // as we'd otherwise simply use `ref.todos.watchAll()`
 final userProvider = StateNotifierProvider.autoDispose<DataStateNotifier<User?>,
     DataState<User?>>((ref) {
-  ref.users.logLevel = 1;
+  ref.users.logLevel = 2;
+  ref.todos.logLevel = 2;
   return ref.users.watchOneNotifier(1,
       params: {'_embed': 'todos'}, alsoWatch: (u) => {u.todos});
 });

@@ -222,7 +222,7 @@ packages:
       name: flutter_data
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.4.0"
+    version: "1.4.2"
   flutter_hooks:
     dependency: transitive
     description:
