@@ -1,5 +1,5 @@
 name: flutter_data_todos
-description: A new Flutter project.
+description: Riverpod sample TODO app, but much better
 
 publish_to: "none"
 
@@ -13,10 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
-  flutter_data:
-    git:
-      url: https://github.com/flutterdata/flutter_data
-      ref: 33f18fd22add38cef70bf0129d5facba26ce92ea
+  flutter_data: ^1.4.3
   hooks_riverpod: ^1.0.3
   json_annotation: ^4.5.0
   path_provider: ^2.0.10
