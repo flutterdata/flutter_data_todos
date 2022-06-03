@@ -51,17 +51,6 @@ final repositoryInitializerProvider =
       internalRepositories[type] = repository;
     }
 
-    // deferred model initialization
-    for (final repository in internalRepositories.values) {
-      await repository.remoteAdapter.internalInitializeModels();
-    }
-
-    ref.onDispose(() {
-      for (final repository in internalRepositories.values) {
-        repository.dispose();
-      }
-    });
-
     return RepositoryInitializer();
 });
 extension RepositoryWidgetRefX on WidgetRef {

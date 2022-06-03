@@ -85,7 +85,7 @@ class Home extends HookConsumerWidget {
                           onError: (e, label, adapter) async {
                             await adapter.onError(e, label); // optional
                             adapter.log(
-                                label!, 'custom logging: ${label.model}');
+                                label, 'custom logging: ${label.model}');
                             ref
                                 .read(userProvider.notifier)
                                 .updateWith(exception: e);
@@ -277,7 +277,7 @@ class TodoItem extends HookConsumerWidget {
               value: todo.completed,
               onChanged: (value) {
                 todo.copyWith(completed: !todo.completed).save(
-                      remote: false,
+                      remote: true,
                       onError: (e, _, __) {
                         ref
                             .read(userProvider.notifier)
@@ -346,7 +346,8 @@ final uncompletedTodosCount = Provider.autoDispose<int>((ref) {
 final filteredTodosProvider = Provider.autoDispose<List<Todo>>((ref) {
   final filter = ref.watch(todoListFilter);
   final state = ref.watch(userProvider);
-  final todos = state.model!.todos.toList();
+  final todos = state.model!.todos.toList()
+    ..sort(((a, b) => a.id.compareTo(b.id)));
 
   switch (filter) {
     case TodoListFilter.completed:
