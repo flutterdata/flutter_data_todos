@@ -219,10 +219,10 @@ packages:
   flutter_data:
     dependency: "direct main"
     description:
-      path: "../flutter_data"
-      relative: true
-    source: path
-    version: "1.4.2"
+      name: flutter_data
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.4.3"
   flutter_hooks:
     dependency: transitive
     description:
