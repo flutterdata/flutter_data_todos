@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_data_todos/models/theme.dart';
 import 'package:flutter_data_todos/models/todo.dart';
 import 'package:flutter_data_todos/models/user.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -11,13 +12,18 @@ import 'package:flutter_data/flutter_data.dart';
 
 import 'main.data.dart';
 
-void main() {
+void main() async {
+  final container = ProviderContainer();
+  await container.read(repositoryInitializerProvider.future);
+  await container.read(uiSettingsInitProvider.future);
+
   runApp(
-    ProviderScope(
+    UncontrolledProviderScope(
+      container: container,
       child: const MyApp(),
-      overrides: [
-        configureRepositoryLocalStorage(clear: false),
-      ],
+      // overrides: [
+      //   configureRepositoryLocalStorage(clear: false),
+      // ],
     ),
   );
 }
@@ -27,17 +33,16 @@ class MyApp extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final setting = ref.uISettings.watchOne(0, remote: false).model!;
     return MaterialApp(
+      theme: setting.themeMode == ThemeMode.light
+          ? ThemeData.light()
+          : ThemeData.dark(),
       home: RefreshIndicator(
-        onRefresh: () async {
-          ref.refresh(repositoryInitializerProvider);
-        },
-        child: ref.watch(repositoryInitializerProvider).when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text(err.toString())),
-              data: (_) => const Home(),
-            ),
-      ),
+          onRefresh: () async {
+            ref.refresh(repositoryInitializerProvider);
+          },
+          child: const Home()),
     );
   }
 }
@@ -50,11 +55,25 @@ class Home extends HookConsumerWidget {
     final state = ref.watch(userProvider);
     final newTodoController = useTextEditingController();
 
+    var setting = ref.uISettings.watchOne(0, remote: false).model!;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        appBar: AppBar(actions: [
+          IconButton(
+            onPressed: () {
+              setting.themeMode == ThemeMode.dark
+                  ? UISetting().save(remote: false)
+                  : UISetting(themeMode: ThemeMode.dark).save(remote: false);
+            },
+            icon: setting.themeMode == ThemeMode.dark
+                ? const Icon(Icons.light_mode)
+                : const Icon(Icons.dark_mode),
+          ),
+        ]),
         body: Builder(
           builder: (context) {
             if (state.isLoading) {

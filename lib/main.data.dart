@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_data_todos/models/todo.dart';
+import 'package:flutter_data_todos/models/theme.dart';
 import 'package:flutter_data_todos/models/user.dart';
 
 // ignore: prefer_function_declarations_over_variables
@@ -30,13 +31,14 @@ ConfigureRepositoryLocalStorage configureRepositoryLocalStorage = ({FutureFn<Str
 
 final repositoryProviders = <String, Provider<Repository<DataModel>>>{
   'todos': todosRepositoryProvider,
+'uISettings': uISettingsRepositoryProvider,
 'users': usersRepositoryProvider
 };
 
 final repositoryInitializerProvider =
   FutureProvider<RepositoryInitializer>((ref) async {
-    final adapters = <String, RemoteAdapter>{'todos': ref.watch(internalTodosRemoteAdapterProvider), 'users': ref.watch(internalUsersRemoteAdapterProvider)};
-    final remotes = <String, bool>{'todos': true, 'users': true};
+    final adapters = <String, RemoteAdapter>{'todos': ref.watch(internalTodosRemoteAdapterProvider), 'uISettings': ref.watch(internalUISettingsRemoteAdapterProvider), 'users': ref.watch(internalUsersRemoteAdapterProvider)};
+    final remotes = <String, bool>{'todos': true, 'uISettings': true, 'users': true};
 
     await ref.watch(graphNotifierProvider).initialize();
 
@@ -55,11 +57,13 @@ final repositoryInitializerProvider =
 });
 extension RepositoryWidgetRefX on WidgetRef {
   Repository<Todo> get todos => watch(todosRepositoryProvider)..remoteAdapter.internalWatch = watch;
+  Repository<UISetting> get uISettings => watch(uISettingsRepositoryProvider)..remoteAdapter.internalWatch = watch;
   Repository<User> get users => watch(usersRepositoryProvider)..remoteAdapter.internalWatch = watch;
 }
 
 extension RepositoryRefX on Ref {
 
   Repository<Todo> get todos => watch(todosRepositoryProvider)..remoteAdapter.internalWatch = watch as Watcher;
+  Repository<UISetting> get uISettings => watch(uISettingsRepositoryProvider)..remoteAdapter.internalWatch = watch as Watcher;
   Repository<User> get users => watch(usersRepositoryProvider)..remoteAdapter.internalWatch = watch as Watcher;
 }
