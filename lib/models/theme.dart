@@ -16,9 +16,9 @@ class UISetting extends DataModel<UISetting> {
 }
 
 final uiSettingsInitProvider = FutureProvider((ref) async {
-  var setting = await ref.uISettings.findOne(0, remote: false);
-  print('Future: $setting');
+  final setting = await ref.uISettings.findOne(0, remote: false);
   if (setting == null) {
+    print('init UI Setting');
     await UISetting().save(remote: false);
   }
 });

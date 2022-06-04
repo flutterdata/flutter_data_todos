@@ -3,7 +3,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_data_todos/models/theme.dart';
 import 'package:flutter_data_todos/models/todo.dart';
 import 'package:flutter_data_todos/models/user.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -11,19 +10,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_data/flutter_data.dart';
 
 import 'main.data.dart';
+import 'models/theme.dart';
 
-void main() async {
-  final container = ProviderContainer();
-  await container.read(repositoryInitializerProvider.future);
-  await container.read(uiSettingsInitProvider.future);
-
+void main() {
   runApp(
-    UncontrolledProviderScope(
-      container: container,
+    ProviderScope(
       child: const MyApp(),
-      // overrides: [
-      //   configureRepositoryLocalStorage(clear: false),
-      // ],
+      overrides: [
+        configureRepositoryLocalStorage(clear: false),
+      ],
     ),
   );
 }
@@ -33,17 +28,36 @@ class MyApp extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final setting = ref.uISettings.watchOne(0, remote: false).model!;
-    return MaterialApp(
-      theme: setting.themeMode == ThemeMode.light
-          ? ThemeData.light()
-          : ThemeData.dark(),
-      home: RefreshIndicator(
-          onRefresh: () async {
-            ref.refresh(repositoryInitializerProvider);
+    return ref.watch(repositoryInitializerProvider).when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text(err.toString())),
+          data: (_) {
+            // you can use `print('init 1');` to check this watch never rebuild
+            return ref.watch(uiSettingsInitProvider).maybeWhen(
+                  data: (data) {
+                    // you can use `print('init 2');` to check watch never rebuild
+                    return Consumer(builder: (ctx, ref, _) {
+                      /// only rebuild this ConsumerWidgdt.
+                      // print('init 3');
+                      final setting =
+                          ref.uISettings.watchOne(0, remote: false).model!;
+                      return MaterialApp(
+                        theme: setting.themeMode == ThemeMode.light
+                            ? ThemeData.light()
+                            : ThemeData.dark(),
+                        home: RefreshIndicator(
+                            onRefresh: () async {
+                              ref.refresh(repositoryInitializerProvider);
+                            },
+                            child: const Home()),
+                      );
+                    });
+                  },
+                  orElse: () =>
+                      const Center(child: CircularProgressIndicator()),
+                );
           },
-          child: const Home()),
-    );
+        );
   }
 }
 
